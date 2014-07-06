@@ -21,11 +21,13 @@
 // Email: firstname.lastname@epfl.ch
 //===========================================================================
 
-#include "stdafx.h"
 #include <cfloat>
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
+#include <cassert>
+
 #include "SLIC.h"
 
 // For superpixels
@@ -509,7 +511,7 @@ void SLIC::GetLABXYSeeds_ForGivenK(
 
 			int i = Y*m_width + X;
 
-			//_ASSERT(n < K);
+			//assert(n < K);
 			
 			//kseedsl[n] = m_lvec[i];
 			//kseedsa[n] = m_avec[i];
@@ -596,17 +598,17 @@ void SLIC::PerformSuperpixelSegmentation_VariableSandM(
 		distvec.assign(sz, DBL_MAX);
 		for( int n = 0; n < numk; n++ )
 		{
-			int y1 = max(0,			kseedsy[n]-offset);
-			int y2 = min(m_height,	kseedsy[n]+offset);
-			int x1 = max(0,			kseedsx[n]-offset);
-			int x2 = min(m_width,	kseedsx[n]+offset);
+			int y1 = std::max(0,        static_cast<int>(kseedsy[n]-offset));
+			int y2 = std::min(m_height, static_cast<int>(kseedsy[n]+offset));
+			int x1 = std::max(0,        static_cast<int>(kseedsx[n]-offset));
+			int x2 = std::min(m_width,  static_cast<int>(kseedsx[n]+offset));
 
 			for( int y = y1; y < y2; y++ )
 			{
 				for( int x = x1; x < x2; x++ )
 				{
 					int i = y*m_width + x;
-					_ASSERT( y < m_height && x < m_width && y >= 0 && x >= 0 );
+					assert( y < m_height && x < m_width && y >= 0 && x >= 0 );
 
 					double l = m_lvec[i];
 					double a = m_avec[i];
@@ -658,7 +660,7 @@ void SLIC::PerformSuperpixelSegmentation_VariableSandM(
 		for( int j = 0; j < sz; j++ )
 		{
 			int temp = klabels[j];
-			_ASSERT(klabels[j] >= 0);
+			assert(klabels[j] >= 0);
 			sigmal[klabels[j]] += m_lvec[j];
 			sigmaa[klabels[j]] += m_avec[j];
 			sigmab[klabels[j]] += m_bvec[j];
@@ -670,7 +672,7 @@ void SLIC::PerformSuperpixelSegmentation_VariableSandM(
 
 		{for( int k = 0; k < numk; k++ )
 		{
-			//_ASSERT(clustersize[k] > 0);
+			//assert(clustersize[k] > 0);
 			if( clustersize[k] <= 0 ) clustersize[k] = 1;
 			inv[k] = 1.0/double(clustersize[k]);//computing inverse now to multiply, than divide later
 		}}
@@ -700,11 +702,10 @@ void SLIC::SaveSuperpixelLabels(
 {
 	int sz = width*height;
 
-	char fname[_MAX_FNAME];
-	char extn[_MAX_FNAME];
-	_splitpath(filename.c_str(), NULL, NULL, fname, extn);
-	string temp = fname;
-
+	int lastindex = filename.find_last_of("."); 
+	string extn = filename.substr(lastindex, filename.length());
+	string temp = filename.substr(0, lastindex); 
+	
 	ofstream outfile;
 	string finalpath = path + temp + string(".dat");
 	outfile.open(finalpath.c_str(), ios::binary);
